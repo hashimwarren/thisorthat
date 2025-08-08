@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clipse: This or That — Favorite Album</title>
+<style>
+  :root {
+    --bg: #0b0b0e;
+    --panel: #15161a;
+    --text: #e9ecf1;
+    --muted: #a8b0bc;
+    --accent: #8b5cf6;
+    --accent-2: #22d3ee;
+    --win: #16a34a;
+    --lose: #ef4444;
+    --border: #26272b;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(1200px 700px at 20% -10%, #11131a 0%, #0b0b0e 60%, #08090b 100%);
+    color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  header {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 3vw, 32px);
+    letter-spacing: 0.2px;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .arena {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .card {
+    background: linear-gradient(180deg, #16171b, #121317);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  .imgbox {
+    aspect-ratio: 1 / 1;
+    background: #0f1014;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .imgbox img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(1.05) contrast(1.05);
+    transition: transform .25s ease;
+  }
+
+  .card:hover .imgbox img { transform: scale(1.03); }
+
+  .meta {
+    padding: 14px 16px 6px;
+  }
+  .title {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .year {
+    color: var(--muted);
+    font-size: .9rem;
+  }
+
+  .vote {
+    appearance: none;
+    width: calc(100% - 16px);
+    margin: 10px auto 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #1b1c22, #14151a);
+    color: var(--text);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .04s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .vote:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  .vote:hover { border-color: #32343b; box-shadow: 0 3px 16px rgba(139,92,246,.15); }
+  .vote:active { transform: translateY(1px); }
+
+  .bar {
+    height: 8px;
+    background: #0f1116;
+    border-top: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .fill {
+    position: absolute; inset: 0 auto 0 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .5s ease;
+  }
+  .pct {
+    position: absolute; right: 8px; top: -22px;
+    font-size: .8rem; color: var(--muted);
+  }
+
+  .controls {
+    display: flex; gap: 10px; align-items: center; justify-content: space-between;
+    margin: 18px 0 6px;
+  }
+
+  .pill {
+    border: 1px solid var(--border);
+    background: #121318;
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .muted { color: var(--muted); }
+
+  .flex { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .right { margin-left: auto; }
+
+  details {
+    margin-top: 8px;
+    border-top: 1px dashed #2a2c33;
+    padding-top: 8px;
+  }
+  a { color: #9edcff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  footer {
+    margin-top: 24px;
+    color: var(--muted);
+    font-size: .9rem;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Clipse: This or That — Favorite Album</h1>
+      <div class="sub">Click the one you prefer. Results update live and save to your browser.</div>
+    </header>
+
+    <div class="arena" id="arena" aria-live="polite"></div>
+
+    <div class="controls">
+      <button class="pill" id="nextPair" title="Show a new pair">New Pair ↻</button>
+      <div class="flex right">
+        <span class="muted" id="totalVotes">Total votes: 0</span>
+        <button class="pill" id="reset">Reset votes</button>
+      </div>
+    </div>
+
+    <details>
+      <summary>What’s included?</summary>
+      <div class="muted">
+        We’re using Clipse’s three studio albums: <em>Lord Willin’</em> (2002), <em>Hell Hath No Fury</em> (2006), and <em>Til the Casket Drops</em> (2009). Covers and links pulled from Wikipedia/Wikimedia.
+      </div>
+    </details>
+
+    <footer>
+      Album images via Wikipedia/Wikimedia Commons. This is a fan-made voting toy for personal use.
+    </footer>
+  </div>
+
+<script>
+(function () {
+  // Album data (images hosted on Wikimedia)
+  const albums = [
+    {
+      id: "lord-willin",
+      title: "Lord Willin’",
+      year: 2002,
+      wiki: "https://en.wikipedia.org/wiki/Lord_Willin%27",
+      img: "https://upload.wikimedia.org/wikipedia/en/thumb/2/2b/LordWillin%27.jpg/500px-LordWillin%27.jpg"
+    },
+    {
+      id: "hell-hath-no-fury",
+      title: "Hell Hath No Fury",
+      year: 2006,
+      wiki: "https://en.wikipedia.org/wiki/Hell_Hath_No_Fury_(Clipse_album)",
+      img: "https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Hell_Hath_No_Fury_Clipse_album_cover.jpg/500px-Hell_Hath_No_Fury_Clipse_album_cover.jpg"
+    },
+    {
+      id: "til-the-casket-drops",
+      title: "Til the Casket Drops",
+      year: 2009,
+      wiki: "https://en.wikipedia.org/wiki/Til_the_Casket_Drops_(Clipse_album)",
+      img: "https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Clipse_-_Till_The_Casket_Drops.jpg/500px-Clipse_-_Till_The_Casket_Drops.jpg"
+    }
+  ];
+
+  const arena = document.getElementById("arena");
+  const nextBtn = document.getElementById("nextPair");
+  const resetBtn = document.getElementById("reset");
+  const totalVotesEl = document.getElementById("totalVotes");
+
+  // Persisted votes
+  const KEY = "clipse-this-or-that-votes";
+  const defaultVotes = Object.fromEntries(albums.map(a => [a.id, 0]));
+  let votes = loadVotes();
+
+  function loadVotes() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return { ...defaultVotes };
+      const parsed = JSON.parse(raw);
+      // Ensure all keys exist even if we add albums later
+      for (const a of albums) if (!(a.id in parsed)) parsed[a.id] = 0;
+      return parsed;
+    } catch {
+      return { ...defaultVotes };
+    }
+  }
+
+  function saveVotes() {
+    localStorage.setItem(KEY, JSON.stringify(votes));
+  }
+
+  function totalVotes() {
+    return Object.values(votes).reduce((a, b) => a + b, 0);
+  }
+
+  function pickTwo() {
+    let i = Math.floor(Math.random() * albums.length);
+    let j = Math.floor(Math.random() * albums.length);
+    while (j === i) j = Math.floor(Math.random() * albums.length);
+    return [albums[i], albums[j]];
+  }
+
+  function pct(id) {
+    const tv = totalVotes();
+    if (tv === 0) return 0;
+    return Math.round((votes[id] / tv) * 100);
+  }
+
+  function renderPair() {
+    const [left, right] = pickTwo();
+    arena.innerHTML = `
+      ${[left, right].map(renderCard).join("")}
+    `;
+    // Attach handlers
+    arena.querySelectorAll(".vote").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        votes[id] = (votes[id] || 0) + 1;
+        saveVotes();
+        updateStats();
+        // little highlight
+        btn.animate([{ transform: "scale(1)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }], { duration: 180, easing: "ease-out" });
+      });
+    });
+    updateStats();
+  }
+
+  function renderCard(album) {
+    const percent = pct(album.id);
+    return `
+      <article class="card" aria-label="${album.title}">
+        <a class="imgbox" href="${album.wiki}" target="_blank" rel="noopener noreferrer" title="Open on Wikipedia">
+          <img src="${album.img}" alt="${album.title} album cover" loading="lazy" />
+        </a>
+        <div class="meta">
+          <div class="title">${album.title}</div>
+          <div class="year">${album.year}</div>
+        </div>
+        <button class="vote" data-id="${album.id}" aria-label="Vote for ${album.title}">Vote for ${album.title}</button>
+        <div class="bar" role="img" aria-label="${percent}% of all votes">
+          <div class="fill" style="width:${percent}%"></div>
+          <div class="pct">${percent}%</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function updateStats() {
+    // Update all bars + total
+    arena.querySelectorAll(".card").forEach(card => {
+      const id = card.querySelector(".vote").dataset.id;
+      const percent = pct(id);
+      card.querySelector(".fill").style.width = percent + "%";
+      card.querySelector(".pct").textContent = percent + "%";
+    });
+    totalVotesEl.textContent = "Total votes: " + totalVotes();
+  }
+
+  nextBtn.addEventListener("click", renderPair);
+  resetBtn.addEventListener("click", () => {
+    if (confirm("Reset all vote totals?")) {
+      votes = { ...defaultVotes };
+      saveVotes();
+      renderPair();
+    }
+  });
+
+  // First render
+  renderPair();
+})();
+</script>
+</body>
+</html>

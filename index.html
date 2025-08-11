@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>What's the Best Clipse Album?</title>
+<meta name="description" content="Vote every Clipse album pairing and see which record comes out on top." />
+<link rel="icon" href="data:," />
+<style>
+  :root { --bg:#0b0b0e; --panel:#15161a; --text:#e9ecf1; --muted:#a8b0bc; --accent:#8b5cf6; --accent2:#22d3ee; --border:#26272b; --good:#16a34a; }
+  html,body{margin:0;height:100%;background:#0b0b0e;color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  header{display:grid;gap:6px;margin-bottom:18px}
+  h1{margin:0;font-size:clamp(22px,3vw,32px)}
+  .sub{color:var(--muted)}
+  .arena{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  .card{background:linear-gradient(180deg,#16171b,#121317);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .06s ease}
+  .card:active{transform:scale(.995)}
+  .imgbox{aspect-ratio:1/1;background:#0f1014;display:grid;place-items:center;overflow:hidden}
+  .imgbox img{width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.05)}
+  .meta{padding:14px 16px}
+  .title{font-weight:700}
+  .year{color:var(--muted);font-size:.9rem}
+  .vs{display:grid;place-items:center;color:var(--muted);margin:6px 0 12px}
+  .controls{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 6px}
+  .pill{border:1px solid var(--border);background:#121318;color:var(--text);padding:10px 14px;border-radius:999px;font-weight:600;cursor:pointer}
+  .pill:disabled{opacity:.6;cursor:not-allowed}
+  .round{color:var(--muted);font-size:.95rem}
+  .end{display:none;margin-top:18px;border:1px dashed #2a2c33;border-radius:14px;padding:16px}
+  .winnerRow{display:flex;gap:16px;align-items:center}
+  .winnerRow img{width:96px;height:96px;border-radius:12px;object-fit:cover;border:1px solid var(--border)}
+  footer{margin-top:24px;color:var(--muted);font-size:.9rem}
+  .leaderboard{margin-top:14px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:#121318}
+  .leaderboard h2{margin:0 0 8px;font-size:1rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .lb-row{display:flex;align-items:center;gap:10px;font-size:.85rem;margin:4px 0}
+  .lb-rank{width:20px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .lb-title{flex:0 0 160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+  .lb-bar{flex:1;height:8px;background:#1d1f24;border-radius:4px;overflow:hidden;position:relative}
+  .lb-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .lb-count{width:38px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  @media (max-width:640px){.arena{grid-template-columns:1fr}.lb-title{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>What's the Best Clipse Album?</h1>
+    <div class="sub">Vote each head‑to‑head pairing once. When all matchups are done, the top vote getter wins.</div>
+  </header>
+
+  <div class="round" id="roundLabel">Loading…</div>
+  <div class="vs">Pick one:</div>
+  <div class="arena" id="arena" aria-live="polite"></div>
+
+  <section class="leaderboard" id="leaderboard" aria-live="polite"></section>
+
+  <div class="controls">
+    <button class="pill" id="restart">Start over</button>
+    <div class="sub" id="progress"></div>
+  </div>
+
+  <section class="end" id="endSection">
+    <h2 style="margin-top:0">Your Top Clipse Album</h2>
+    <div class="winnerRow" id="winnerRow"></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="pill" id="downloadCard">Download winner card</button>
+      <button class="pill" id="playAgain">Play again</button>
+    </div>
+  </section>
+
+  <footer>
+    Covers from Wikipedia/Wikimedia. Fan-made voting toy. Not affiliated.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const albums = [
+    { id:"lord-willin", title:"Lord Willin’", year:2002, wiki:"https://en.wikipedia.org/wiki/Lord_Willin%27", img:"https://upload.wikimedia.org/wikipedia/en/thumb/2/2b/LordWillin%27.jpg/600px-LordWillin%27.jpg" },
+    { id:"hell-hath-no-fury", title:"Hell Hath No Fury", year:2006, wiki:"https://en.wikipedia.org/wiki/Hell_Hath_No_Fury_(Clipse_album)", img:"https://upload.wikimedia.org/wikipedia/en/thumb/2/25/Hell_Hath_No_Fury_Clipse_album_cover.jpg/600px-Hell_Hath_No_Fury_Clipse_album_cover.jpg" },
+    { id:"til-the-casket-drops", title:"Til the Casket Drops", year:2009, wiki:"https://en.wikipedia.org/wiki/Til_the_Casket_Drops_(Clipse_album)", img:"https://upload.wikimedia.org/wikipedia/en/thumb/2/21/Clipse_-_Till_The_Casket_Drops.jpg/600px-Clipse_-_Till_The_Casket_Drops.jpg" },
+    { id:"let-god-sort-em-out", title:"Let God Sort Em Out", year:2025, wiki:"https://en.wikipedia.org/wiki/Let_God_Sort_Em_Out", img:"https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Let_God_Sort_Em_Out.jpg/600px-Let_God_Sort_Em_Out.jpg" }
+  ];
+
+  const arena = document.getElementById("arena");
+  const roundLabel = document.getElementById("roundLabel");
+  const progressEl = document.getElementById("progress");
+  const endSection = document.getElementById("endSection");
+  const winnerRow = document.getElementById("winnerRow");
+  const restartBtn = document.getElementById("restart");
+  const playAgainBtn = document.getElementById("playAgain");
+  const downloadBtn = document.getElementById("downloadCard");
+  const leaderboardEl = document.getElementById("leaderboard");
+
+  let pairList = [];
+  let pairIndex = 0;
+  let tally = {};
+
+  function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  function start(){
+    endSection.style.display='none';
+    const sh = shuffle(albums);
+    pairList=[]; for(let i=0;i<sh.length;i++){ for(let j=i+1;j<sh.length;j++){ pairList.push([sh[i],sh[j]]);} }
+    pairList = shuffle(pairList);
+    pairIndex=0; tally=Object.fromEntries(albums.map(a=>[a.id,0]));
+    roundLabel.textContent = `${albums.length} albums · ${pairList.length} matchups`;
+    renderLeaderboard();
+    nextMatch();
+  }
+
+  function nextMatch(){
+    if(pairIndex>=pairList.length){ return showWinner(determineWinner()); }
+    const [l,r]=pairList[pairIndex];
+    progressEl.textContent = `Match ${pairIndex+1} of ${pairList.length}`;
+    arena.innerHTML=[l,r].map(cardHTML).join('');
+    arena.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click',()=>{
+        const id=card.dataset.id; const winner=(id===l.id)?l:r;
+        tally[winner.id]=(tally[winner.id]||0)+1; renderLeaderboard();
+        card.style.outline=`2px solid ${getComputedStyle(document.documentElement).getPropertyValue('--good')}`;
+        pairIndex++; setTimeout(nextMatch,160);
+      },{once:true});
+      card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click();} });
+    });
+  }
+
+  function determineWinner(){ let win=null,b=-1; for(const id in tally){const s=tally[id]; if(s>b || (s===b && win && id<win)){b=s; win=id;} } return albums.find(a=>a.id===win)||albums[0]; }
+
+  function renderLeaderboard(){ const entries=Object.entries(tally); if(!entries.length)return; const max=Math.max(1,...entries.map(e=>e[1])); const sorted=entries.sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])); leaderboardEl.innerHTML=`<h2>Leaderboard</h2>${sorted.map(([id,c],i)=>{const a=albums.find(x=>x.id===id);const pct=(c/max)*100;return `<div class=\"lb-row\" data-id=\"${id}\"><div class=\"lb-rank\">${i+1}</div><div class=\"lb-title\" title=\"${a.title}\">${a.title}</div><div class=\"lb-bar\"><span style=\"width:${pct}%\"></span></div><div class=\"lb-count\">${c}</div></div>`;}).join('')}<div style=\"margin-top:8px;font-size:.7rem;color:var(--muted)\">Session only; restarting clears scores.</div>`; }
+
+  function cardHTML(a){return `<article class=\"card\" data-id=\"${a.id}\" role=\"button\" tabindex=\"0\" aria-label=\"Vote for ${a.title}\"><div class=\"imgbox\"><img src=\"${a.img}\" alt=\"${a.title} album cover\" loading=\"eager\" /></div><div class=\"meta\"><div class=\"title\">${a.title}</div><div class=\"year\">${a.year}</div></div><div style=\"padding:0 16px 14px;color:var(--muted)\">Tap / click to vote</div></article>`; }
+
+  function showWinner(a){ arena.innerHTML=''; roundLabel.textContent='Results'; progressEl.textContent=`All ${pairList.length} matchups completed`; winnerRow.innerHTML=`<img src=\"${a.img}\" alt=\"${a.title} album cover\"><div><div style=\"font-weight:800;font-size:1.2rem;margin-bottom:4px\">${a.title}</div><div class=\"sub\">Won with ${tally[a.id]} vote${tally[a.id]===1?'':'s'}</div><div style=\"margin-top:8px\"><a href=\"${a.wiki}\" target=\"_blank\" rel=\"noopener noreferrer\">View on Wikipedia</a></div></div>`; endSection.style.display='block'; downloadBtn.onclick=()=>downloadCard(a);}  
+
+  async function downloadCard(a){ const W=1080,H=1080; const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H; const ctx=canvas.getContext('2d'); const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,'#12131a'); g.addColorStop(1,'#0b0c11'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); const img=new Image(); img.crossOrigin='anonymous'; img.src=a.img.replace(/\/\d+px-/,'/1024px-'); await img.decode().catch(()=>{}); const pad=72,size=W-pad*2; if(img.naturalWidth){ctx.drawImage(img,pad,pad,size,size);} else {ctx.fillStyle='#1a1b22'; ctx.fillRect(pad,pad,size,size);} ctx.fillStyle='#ffffff'; ctx.font='bold 64px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial'; ctx.textAlign='left'; ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=16; wrapText(ctx,'My pick for the best Clipse album',pad,H-pad-150,size,64); ctx.shadowBlur=0; ctx.fillStyle='#a8b0bc'; ctx.font='32px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial'; ctx.fillText(new Date().toLocaleDateString(),pad,H-pad-32); const pill=`★ ${a.title} (${a.year})`; drawPill(ctx,pill,pad,H-pad-96); const url=canvas.toDataURL('image/png'); const link=document.createElement('a'); link.href=url; link.download=`clipse-favorite-${a.id}.png`; link.click(); }
+
+  function drawPill(ctx,text,x,y){ ctx.font='bold 40px system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial'; const padX=24,padY=12; const w=ctx.measureText(text).width+padX*2; const h=56; ctx.fillStyle='#171821'; const r=28; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill(); ctx.fillStyle='#e9ecf1'; ctx.fillText(text,x+padX,y+40); }
+  function wrapText(ctx,text,x,y,maxWidth,lineHeight){ const words=text.split(' '); let line=''; for(let n=0;n<words.length;n++){ const test=line+words[n]+' '; if(ctx.measureText(test).width>maxWidth && n>0){ ctx.fillText(line,x,y); line=words[n]+' '; y+=lineHeight; } else { line=test; } } ctx.fillText(line,x,y); }
+
+  restartBtn.addEventListener('click',start);
+  playAgainBtn?.addEventListener('click',start);
+  start();
+})();
+</script>
+</body>
+</html>
